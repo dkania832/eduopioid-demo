@@ -1,24 +1,23 @@
 import React, { useState } from 'react';
-import { fetchCertificate } from '../services/api';
+import jsPDF from 'jspdf';
 
 export default function Certificate() {
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const download = async () => {
-    if (!name) return alert('Please enter your name');
-    setLoading(true);
-    try {
-      const url = await fetchCertificate({ name, course: 'EduOpioid Course' });
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'certificate.pdf';
-      a.click();
-    } catch (err) {
-      alert('Error generating certificate');
-    } finally {
-      setLoading(false);
-    }
+  const download = () => {
+    if (!name.trim()) return alert('Please enter your name');
+    const doc = new jsPDF('landscape', undefined, 'letter');
+    const date = new Date().toLocaleDateString();
+    doc.setFontSize(24);
+    doc.text('Certificate of Completion', 105, 40, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text('This certifies that', 105, 60, { align: 'center' });
+    doc.setFontSize(20);
+    doc.text(name.trim(), 105, 75, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text('has completed the EduOpioid Course', 105, 95, { align: 'center' });
+    doc.text(`on ${date}`, 105, 110, { align: 'center' });
+    doc.save('certificate.pdf');
   };
 
   return (
@@ -30,9 +29,7 @@ export default function Certificate() {
         placeholder="Enter your full name"
         style={{ marginRight: '0.5rem' }}
       />
-      <button onClick={download} disabled={loading}>
-        {loading ? 'Generating…' : 'Download Certificate'}
-      </button>
+      <button onClick={download}>Download Certificate</button>
     </div>
   );
 }
