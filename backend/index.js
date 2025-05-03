@@ -36,12 +36,39 @@ app.post('/api/certificate', (req, res) => {
   doc.end();
 });
 
-// Dummy risk endpoint
+// Weighted risk endpoint
 app.post('/api/risk', (req, res) => {
-  const score = Math.floor(Math.random() * 100);
-  const flag = score < 33 ? 'green' : score < 66 ? 'amber' : 'red';
+  const { age, priorUse, mentalHealth, earlyRefills, surgeryType } = req.body;
+  let points = 0;
+
+  // Age 18–30 adds 3 points
+  const ageNum = parseInt(age, 10);
+  if (!isNaN(ageNum) && ageNum >= 18 && ageNum <= 30) points += 3;
+
+  // Prior substance use disorder: +3
+  if (priorUse.toLowerCase() === 'yes') points += 3;
+
+  // Mental‑health diagnosis: +2
+  if (mentalHealth.toLowerCase() === 'yes') points += 2;
+
+  // Early refills requested: +4
+  if (earlyRefills.toLowerCase() === 'yes') points += 4;
+
+  // Major surgery type: +1 (case‑insensitive match)
+  if (/major/i.test(surgeryType)) points += 1;
+
+  // Scale total (max 13) to a 0–100 score
+  const maxPoints = 13;
+  const score = Math.round((points / maxPoints) * 100);
+
+  // Flag thresholds
+  const flag = score < 30
+    ? 'green'
+    : score < 60
+      ? 'amber'
+      : 'red';
+
   res.json({ score, flag });
 });
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`API listening on ${PORT}`));
